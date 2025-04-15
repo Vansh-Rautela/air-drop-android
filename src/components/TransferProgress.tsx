@@ -1,51 +1,48 @@
 
 import { useState, useEffect } from "react";
-import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, Pause, Play, XCircleIcon } from "lucide-react";
+import { transferManager, TransferSession } from "../utils/transferManager";
+import { Button } from "@/components/ui/button";
 
 interface TransferProgressProps {
-  totalFiles: number;
-  totalSize: string;
   onComplete?: () => void;
 }
 
-type TransferStatus = "in_progress" | "completed" | "failed";
-
-const TransferProgress = ({ totalFiles, totalSize, onComplete }: TransferProgressProps) => {
-  const [progress, setProgress] = useState(0);
-  const [transferSpeed, setTransferSpeed] = useState("0 MB/s");
-  const [timeRemaining, setTimeRemaining] = useState("--:--");
-  const [status, setStatus] = useState<TransferStatus>("in_progress");
+const TransferProgress = ({ onComplete }: TransferProgressProps) => {
+  const [transferSession, setTransferSession] = useState<TransferSession | null>(null);
   
   useEffect(() => {
-    // Simulate transfer progress
-    const interval = setInterval(() => {
-      setProgress(prevProgress => {
-        if (prevProgress >= 100) {
-          clearInterval(interval);
-          setStatus("completed");
-          if (onComplete) onComplete();
-          return 100;
-        }
-        
-        // Random increment between 2-5%
-        const increment = Math.random() * 3 + 2;
-        return Math.min(prevProgress + increment, 100);
-      });
+    // Subscribe to transfer updates
+    const unsubscribe = transferManager.subscribeToTransfer(session => {
+      setTransferSession(session);
       
-      // Update random transfer speed
-      const speedValue = (Math.random() * 2 + 0.5).toFixed(1);
-      setTransferSpeed(`${speedValue} MB/s`);
-      
-      // Update time remaining
-      const remainingPercentage = 100 - progress;
-      const secondsRemaining = Math.round((remainingPercentage / 5) * 4);
-      const minutes = Math.floor(secondsRemaining / 60);
-      const seconds = secondsRemaining % 60;
-      setTimeRemaining(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-    }, 500);
+      if (session?.status === "completed" && onComplete) {
+        onComplete();
+      }
+    });
     
-    return () => clearInterval(interval);
-  }, [progress, onComplete]);
+    return unsubscribe;
+  }, [onComplete]);
+  
+  const handlePauseResume = () => {
+    if (!transferSession) return;
+    
+    if (transferSession.status === "transferring") {
+      transferManager.pauseTransfer();
+    } else if (transferSession.status === "paused") {
+      transferManager.resumeTransfer();
+    }
+  };
+  
+  const handleCancel = () => {
+    transferManager.cancelTransfer();
+  };
+  
+  if (!transferSession) {
+    return null;
+  }
+  
+  const { progress, status, transferSpeed, timeRemaining, device, files, totalSize } = transferSession;
   
   const getStatusDisplay = () => {
     switch (status) {
@@ -61,6 +58,13 @@ const TransferProgress = ({ totalFiles, totalSize, onComplete }: TransferProgres
           <div className="flex items-center gap-2 text-destructive">
             <XCircle size={20} />
             <span className="font-medium">Transfer Failed</span>
+          </div>
+        );
+      case "paused":
+        return (
+          <div className="flex items-center gap-2 text-amber-500">
+            <AlertTriangle size={20} />
+            <span className="font-medium">Transfer Paused</span>
           </div>
         );
       default:
@@ -91,14 +95,38 @@ const TransferProgress = ({ totalFiles, totalSize, onComplete }: TransferProgres
       
       <div className="flex justify-between text-sm text-gray-500">
         <div>
-          <p>{totalFiles} Files • {totalSize}</p>
+          <p>{files.length} Files • {totalSize}</p>
           <p className="mt-1">Speed: {transferSpeed}</p>
+          <p className="mt-1">Device: {device.name}</p>
         </div>
         <div className="text-right">
           <p>Time Remaining</p>
           <p className="mt-1 font-medium">{status === "completed" ? "00:00" : timeRemaining}</p>
         </div>
       </div>
+      
+      {(status === "transferring" || status === "paused") && (
+        <div className="flex gap-3 mt-4">
+          <Button 
+            variant="outline" 
+            className="flex-1"
+            onClick={handlePauseResume}
+          >
+            {status === "transferring" ? (
+              <><Pause size={16} /> Pause</>
+            ) : (
+              <><Play size={16} /> Resume</>
+            )}
+          </Button>
+          <Button 
+            variant="destructive" 
+            className="flex-1"
+            onClick={handleCancel}
+          >
+            <XCircleIcon size={16} /> Cancel
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

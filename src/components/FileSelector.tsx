@@ -1,27 +1,26 @@
 
 import { File, Image, Video, Music, FileText, X, Check } from "lucide-react";
-import { useState } from "react";
-
-interface FileItem {
-  id: string;
-  name: string;
-  type: string;
-  size: string;
-  selected: boolean;
-}
+import { useState, useEffect } from "react";
+import { TransferFile } from "../utils/transferManager";
 
 interface FileSelectorProps {
-  onSelectionChange?: (files: FileItem[]) => void;
+  onSelectionChange?: (files: TransferFile[]) => void;
 }
 
 const FileSelector = ({ onSelectionChange }: FileSelectorProps) => {
-  const [files, setFiles] = useState<FileItem[]>([
-    { id: "file1", name: "Vacation Photo.jpg", type: "image", size: "3.2 MB", selected: false },
-    { id: "file2", name: "Project Presentation.pdf", type: "document", size: "5.7 MB", selected: false },
-    { id: "file3", name: "Birthday Video.mp4", type: "video", size: "18.5 MB", selected: false },
-    { id: "file4", name: "Meeting Notes.docx", type: "document", size: "1.1 MB", selected: false },
-    { id: "file5", name: "Favorite Song.mp3", type: "audio", size: "4.6 MB", selected: false }
+  const [files, setFiles] = useState<TransferFile[]>([
+    { id: "file1", name: "Vacation Photo.jpg", type: "image", size: "3.2 MB", sizeInBytes: 3355443, selected: false },
+    { id: "file2", name: "Project Presentation.pdf", type: "document", size: "5.7 MB", sizeInBytes: 5976883, selected: false },
+    { id: "file3", name: "Birthday Video.mp4", type: "video", size: "18.5 MB", sizeInBytes: 19398656, selected: false },
+    { id: "file4", name: "Meeting Notes.docx", type: "document", size: "1.1 MB", sizeInBytes: 1153433, selected: false },
+    { id: "file5", name: "Favorite Song.mp3", type: "audio", size: "4.6 MB", sizeInBytes: 4823449, selected: false }
   ]);
+  
+  useEffect(() => {
+    if (onSelectionChange) {
+      onSelectionChange(files.filter(file => file.selected));
+    }
+  }, [files, onSelectionChange]);
   
   const toggleFileSelection = (id: string) => {
     const updatedFiles = files.map(file => 
@@ -29,10 +28,6 @@ const FileSelector = ({ onSelectionChange }: FileSelectorProps) => {
     );
     
     setFiles(updatedFiles);
-    
-    if (onSelectionChange) {
-      onSelectionChange(updatedFiles.filter(file => file.selected));
-    }
   };
   
   const getFileIcon = (type: string) => {
@@ -68,7 +63,9 @@ const FileSelector = ({ onSelectionChange }: FileSelectorProps) => {
           <div 
             key={file.id}
             onClick={() => toggleFileSelection(file.id)}
-            className={`file-card ${file.selected ? "border-2 border-file-teal" : "border border-gray-200"}`}
+            className={`p-3 flex items-center gap-3 rounded-lg border cursor-pointer ${
+              file.selected ? "border-2 border-file-teal" : "border border-gray-200"
+            }`}
           >
             <div className="p-2 rounded-md bg-gray-50">
               {getFileIcon(file.type)}

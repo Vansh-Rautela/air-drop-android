@@ -1,63 +1,52 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Send } from "lucide-react";
 import Header from "../components/Header";
-import DeviceList from "../components/DeviceList";
+import NetworkDeviceList from "../components/NetworkDeviceList";
 import FileSelector from "../components/FileSelector";
 import TransferProgress from "../components/TransferProgress";
-
-interface Device {
-  id: string;
-  name: string;
-  status: "available" | "connecting" | "connected";
-}
-
-interface FileItem {
-  id: string;
-  name: string;
-  type: string;
-  size: string;
-  selected: boolean;
-}
+import { NetworkDevice } from "../utils/connectivityManager";
+import { TransferFile, transferManager } from "../utils/transferManager";
 
 const SendPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState<"select_device" | "select_files" | "transferring">("select_device");
-  const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
-  const [selectedFiles, setSelectedFiles] = useState<FileItem[]>([]);
+  const [selectedDevice, setSelectedDevice] = useState<NetworkDevice | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<TransferFile[]>([]);
   
-  const handleDeviceSelect = (device: Device) => {
+  const handleDeviceSelect = (device: NetworkDevice) => {
     setSelectedDevice(device);
     setStep("select_files");
   };
   
-  const handleFileSelection = (files: FileItem[]) => {
+  const handleFileSelection = (files: TransferFile[]) => {
     setSelectedFiles(files);
   };
   
   const handleStartTransfer = () => {
-    if (selectedFiles.length > 0) {
-      setStep("transferring");
-    }
+    if (selectedFiles.length === 0 || !selectedDevice) return;
+    
+    transferManager.startTransfer(selectedDevice, selectedFiles)
+      .then(() => {
+        setStep("transferring");
+      })
+      .catch(error => {
+        console.error("Transfer error:", error);
+      });
   };
   
   const handleTransferComplete = () => {
-    // Navigate to history after a short delay
+    // Navigate to history after a delay
     setTimeout(() => {
       navigate("/history");
     }, 2000);
   };
   
-  const getTotalFileSize = () => {
-    // For demo purposes, just add up the sizes (in real app would convert to bytes and sum)
-    return "32.1 MB";
-  };
-  
   const renderStepContent = () => {
     switch (step) {
       case "select_device":
-        return <DeviceList onDeviceSelect={handleDeviceSelect} />;
+        return <NetworkDeviceList onDeviceSelect={handleDeviceSelect} />;
       
       case "select_files":
         return (
@@ -85,11 +74,7 @@ const SendPage = () => {
             <h2 className="section-title text-center mb-6">
               Sending to {selectedDevice?.name}
             </h2>
-            <TransferProgress 
-              totalFiles={selectedFiles.length} 
-              totalSize={getTotalFileSize()} 
-              onComplete={handleTransferComplete}
-            />
+            <TransferProgress onComplete={handleTransferComplete} />
           </div>
         );
     }
