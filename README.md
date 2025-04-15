@@ -1,73 +1,164 @@
-# Welcome to your Lovable project
 
-## Project info
+# FileShare: Real-Time File Transfer for Android Devices
 
-**URL**: https://lovable.dev/projects/6c706f19-23c4-432e-854c-36fd8655861c
+FileShare is a modern, peer-to-peer file transfer application that allows Android devices to share files directly without requiring an internet connection or a central server.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- Direct device-to-device file transfers using WiFi Direct and Bluetooth
+- Real-time transfer progress tracking
+- Transfer history management
+- Automatic protocol selection based on file size and available connections
+- Support for multiple file types (images, videos, documents, etc.)
 
-**Use Lovable**
+## Architecture
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6c706f19-23c4-432e-854c-36fd8655861c) and start prompting.
+FileShare uses a hybrid architecture combining React for the user interface and Capacitor for native device capabilities:
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**: React with TypeScript
+- **Design**: Tailwind CSS and shadcn-ui components
+- **Native Connectivity**: Custom Capacitor plugins for WiFi Direct and Bluetooth
+- **State Management**: React Context and hooks
 
-**Use your preferred IDE**
+## Project Structure
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+```
+src/
+├── components/          # React UI components
+├── pages/               # Application pages
+├── hooks/               # Custom React hooks
+├── utils/               # Utility functions and managers
+│   ├── fileManager.ts   # File handling utilities
+│   ├── transferManager.ts  # Core transfer coordination
+│   ├── connectivityManager.ts  # Device discovery and connection
+├── native/              # Native functionality through Capacitor
+│   ├── wifi/            # WiFi Direct implementation
+│   ├── bluetooth/       # Bluetooth implementation
+├── types/               # TypeScript type definitions
+└── constants/           # Application constants
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+android/                 # Android native code
+├── app/
+│   └── src/
+│       └── main/
+│           ├── java/
+│           │   └── app/
+│           │       └── lovable/
+│           │           └── fileshare/
+│           │               ├── WifiDirectPlugin.java
+│           │               └── BluetoothPlugin.java
 ```
 
-**Edit a file directly in GitHub**
+## Setting Up the Project
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Prerequisites
 
-**Use GitHub Codespaces**
+1. Node.js and npm
+2. Android SDK (for Android development)
+3. Capacitor CLI
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Installation
 
-## What technologies are used for this project?
+1. Clone the repository
+```bash
+git clone <repository-url>
+cd fileshare
+```
 
-This project is built with:
+2. Install dependencies
+```bash
+npm install
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+3. Initialize Capacitor
+```bash
+npx cap init
+```
 
-## How can I deploy this project?
+4. Add Android platform
+```bash
+npx cap add android
+```
 
-Simply open [Lovable](https://lovable.dev/projects/6c706f19-23c4-432e-854c-36fd8655861c) and click on Share -> Publish.
+5. Build the project
+```bash
+npm run build
+```
 
-## Can I connect a custom domain to my Lovable project?
+6. Sync Capacitor
+```bash
+npx cap sync
+```
 
-Yes, you can!
+## Running the Application
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### On Android
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+```bash
+npx cap run android
+```
+
+This will open the project in Android Studio, where you can run it on an emulator or physical device.
+
+### Testing with Multiple Devices
+
+To properly test file transfers, you'll need at least two physical Android devices. Emulators won't work for WiFi Direct testing as they don't have the necessary hardware capabilities.
+
+## Implementation Details
+
+### WiFi Direct Implementation
+
+The WifiDirectPlugin provides native access to Android's WiFi Direct API, allowing devices to:
+
+- Discover nearby devices
+- Establish direct connections
+- Transfer files at high speed (up to 250Mbps theoretically)
+
+### Bluetooth Implementation
+
+The BluetoothPlugin provides an alternative transfer method when WiFi Direct is unavailable, supporting:
+
+- Device discovery and pairing
+- Secure connections
+- File transfers (at lower speeds than WiFi Direct)
+
+### Transfer Protocol Selection
+
+The system automatically selects the optimal transfer protocol based on:
+
+- File size (large files prefer WiFi Direct)
+- Available connections
+- User preferences
+
+## Security Considerations
+
+- Files are transferred directly between devices without server storage
+- All connections require explicit user approval
+- The application requires minimal permissions
+
+## Troubleshooting
+
+### Common Issues
+
+1. **WiFi Direct Not Working**:
+   - Ensure both devices have WiFi enabled
+   - Check that location permissions are granted (Android requirement)
+   - Some devices may have manufacturer-specific limitations
+
+2. **Bluetooth Connection Issues**:
+   - Make sure Bluetooth is enabled on both devices
+   - Try pairing devices manually before using the app
+   - Keep devices within 10 meters of each other
+
+3. **Transfer Failures**:
+   - Ensure devices remain in close proximity during transfer
+   - Check that receiving device has enough storage space
+   - Battery optimization may interrupt long transfers
+
+## License
+
+[Specify your license here]
+
+## Credits
+
+Developed by [Your Name/Organization]
